@@ -1,0 +1,49 @@
+version: '3.4'
+
+services:
+  niximera-svelte:
+    image: niximera/svelte:v1.1.8
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8004:3000"
+    depends_on:
+      - "postgres"
+      - "hasura"
+    networks:
+      - niximera_svelte_net
+
+  postgres:
+    image: postgres:12
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword
+    networks:
+      - niximera_svelte_net
+
+  hasura:
+    image: hasura/graphql-engine:v1.3.3
+    ports:
+      - "8080:8080"
+    depends_on:
+      - "postgres"
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:mysecretpassword@postgres:5432/postgres
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+    networks:
+      - niximera_svelte_net
+
+volumes:
+  pgdata:
+
+networks:
+  int_net:
+    driver: overlay
+    attachable: true
+    external: true
+  niximera_svelte_net:
+    driver: bridge

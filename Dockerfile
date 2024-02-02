@@ -1,17 +1,14 @@
-FROM node as builder
+# İlk aşama: Uygulamayı inşa et
+FROM node AS builder
 
 WORKDIR /app
-COPY package.json .
-RUN yarn install
+
+COPY package.json package-lock.json ./
+
 COPY . .
+
+RUN yarn install
 RUN yarn build
-
-
-FROM nginx:1.21.0-alpine
-WORKDIR /usr/share/nginx/html
-COPY --from=builder .svelte-kit/output/server/ /usr/share/nginx/html
-
+ENV PORT 3000
 EXPOSE 3000
-EXPOSE 443
-
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+CMD ["node", "build"]
