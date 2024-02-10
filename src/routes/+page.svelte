@@ -62,48 +62,99 @@
 		activeTab = tab;
 	}
 
-	
 	/**
 	 * @param {any} event
 	 */
 	const handleLoginFormSubmit = async (event) => {
 		event.preventDefault();
 
-		const formData = {
-			email: email,
-			password: password
-		};
-
-		try {
-			
-		} catch (error) {
+		if (email == '' || password == '') {
+			alert('Please fill in all fields.');
+			return;
 		}
+
+		checkEmail(email).then((checkEmailResponse) => {
+			if (checkEmailResponse.mails.length > 0) {
+				checkUser(email, password).then((chekUserResponse) => {
+					if (chekUserResponse.users.length > 0) {
+						alert('You logged successfully.');
+					} else {
+						alert('Your email or password is incorrect. Please try again.');
+					}
+				});
+			} else {
+				alert(
+					'You can not login with this email. Because your mail has no permission for our system.'
+				);
+			}
+		});
 	};
-	
+
 	/**
 	 * @param {any} event
 	 */
 	const handleRegisterFormSubmit = async (event) => {
 		event.preventDefault();
 
-		const formData = {
-			email: email,
-			password: password,
-			repassword: repassword
-		};
-
-		try {
-			
-		} catch (error) {
+		if (email == '' || password == '' || repassword == '') {
+			alert('Please fill in all fields.');
+			return;
+		} else if (password !== repassword) {
+			alert('Passwords do not match.');
+			return;
 		}
+
+		checkEmail(email).then((checkEmailResponse) => {
+			if (checkEmailResponse.mails.length > 0) {
+				checkUser(email, password).then((chekUserResponse) => {
+					if (chekUserResponse.users.length > 0) {
+						alert('You can not register with this email. Because you are already in our system.');
+					} else {
+						registerUser(email, password).then((registerUserResponse) => {
+							if (registerUserResponse.insert_users_one) {
+								alert('You have successfully registered.');
+							} else {
+								alert('An error occurred while registering.');
+							}
+						});
+					}
+				});
+			} else {
+				alert(
+					'You can not register with this email. Because your mail has no permission for our system.'
+				);
+			}
+		});
 	};
-	
+
+	/**
+	 * @param {string} email
+	 */
+	const checkEmail = (email) => {
+		return client(queries.findMail, { email: email });
+	};
+
+	/**
+	 * @param {string} email
+	 * @param {string} password
+	 */
+	const checkUser = (email, password) => {
+		return client(queries.findUser, { email: email, password: password });
+	};
+
+	/**
+	 * @param {string} email
+	 * @param {string} password
+	 */
+	const registerUser = (email, password) => {
+		return client(queries.registerUser, { email: email, password: password });
+	};
 </script>
 
 {#if data.fetching}
-	<p>Veriler yükleniyor...</p>
+	<p>Loading for data...</p>
 {:else if data.error.message !== ''}
-	<p>Hata oluştu: {data.error.message}</p>
+	<p>Error: {data.error.message}</p>
 {:else if data.data && data.data.mails.length > 0}
 	<div class="flex min-h-screen">
 		<div class="fixed w-[550px] h-screen hidden lg:block bg-cover bg-center bg-[url('/img2.jpg')]">
@@ -131,8 +182,18 @@
 					</div>
 					{#if activeTab === 'login'}
 						<form class="flex flex-col space-y-4" on:submit={handleLoginFormSubmit}>
-							<input type="email" placeholder="E-mail Address" class="p-2 bg-[#445867] rounded" bind:value={email} />
-							<input type="password" placeholder="Password" class="p-2 bg-[#445867] rounded" bind:value={password} />
+							<input
+								type="email"
+								placeholder="E-mail Address"
+								class="p-2 bg-[#445867] rounded"
+								bind:value={email}
+							/>
+							<input
+								type="password"
+								placeholder="Password"
+								class="p-2 bg-[#445867] rounded"
+								bind:value={password}
+							/>
 							<div class="flex items-center">
 								<input
 									type="checkbox"
@@ -150,9 +211,24 @@
 						</form>
 					{:else if activeTab === 'register'}
 						<form class="flex flex-col space-y-4" on:submit={handleRegisterFormSubmit}>
-							<input type="email" placeholder="E-mail Address" class="p-2 bg-[#445867] rounded" bind:value={email} />
-							<input type="password" placeholder="Password" class="p-2 bg-[#445867] rounded" bind:value={password} />
-							<input type="password" placeholder="Re-Password" class="p-2 bg-[#445867] rounded" bind:value={repassword} />
+							<input
+								type="email"
+								placeholder="E-mail Address"
+								class="p-2 bg-[#445867] rounded"
+								bind:value={email}
+							/>
+							<input
+								type="password"
+								placeholder="Password"
+								class="p-2 bg-[#445867] rounded"
+								bind:value={password}
+							/>
+							<input
+								type="password"
+								placeholder="Re-Password"
+								class="p-2 bg-[#445867] rounded"
+								bind:value={repassword}
+							/>
 							<div class="flex justify-start space-x-2 mt-4">
 								<button type="submit" class="bg-white py-2 rounded-md text-gray-800 font-bold p-10"
 									>Register</button
@@ -172,5 +248,5 @@
 		</div>
 	</div>
 {:else}
-	<p>Veri bulunamadı.</p>
+	<p>There is no any data.</p>
 {/if}
